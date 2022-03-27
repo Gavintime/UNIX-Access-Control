@@ -1,0 +1,14 @@
+useradd root password
+login root password
+logout
+groupadd groupname
+usergrp username groupname
+mkfile filename
+chmod filename rwx rwx rwx
+chown filename username
+chgrp filename groupname
+read filename
+write filename text
+execute filename
+ls filename
+end

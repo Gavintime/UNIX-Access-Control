@@ -1,0 +1,67 @@
+user accounts
+    root: admin, can create users, groups, change file ownership
+    accounts have a username and pass (both case sensitive)
+    user accounts with passwords are stored in a real file accounts.txt
+        use for auth (dont use in memory list etc)
+        explain approach/format in docs
+
+groups
+case sensitive
+    users belong to 0+ groups
+    use in memory data structure for management
+    after all instructions are processed, create real groups.txt listing groups with users
+        (see provided file structure)
+
+
+files
+    filename is case sensitive
+    has an owner (user)
+    triplet of access perms
+    optional group (only 1)
+    in in memory data sctructure for file ACL (access control list)
+    after last instruction, create real file files.txt containing each filename, owner, group, perms
+        (see provided file structure)
+    each file created with mkfile must have a corresponding real file (must be able to read and write)
+        same dir as exec
+    special files accounts.txt, audit.txt, groups.txt, and files.txt
+        not accessable via mkfile, read, write, execute, ls, chown, chgrp, or chmod
+            error (and log) if these files are refferenced in commands
+        wipe these files on program start
+    overwrite existing files before current exection (as if file didn't exist)
+        subsequent write commands should still append
+
+commands:
+    useradd username password
+    login username password
+    logout
+    groupadd groupname
+    usergrp username groupname
+    mkfile filename
+    chmod filename rwx rwx rwx
+    chown filename username
+    chgrp filename groupname
+    read filename
+    write filename text
+    execute filename
+    ls filename
+    end
+
+instructions
+    case sensitive
+    assume instruction file is error free (poggers)
+    first inst must be "useradd root password"
+        only time useradd works without being logged in
+        report error if useradd is not the first command
+        must run login command after useradd to login as root
+        cannot run login command after logged in
+    after exec each instruction, print command to screen and real log file audit.txt
+
+user,group,file name format:
+    1-30 ascii chars
+    no forward slash, colon, carriage return, form feed, horizontal tab, new line, vertical tab, and space.
+    "/:\r\f\t\n\v "
+
+password format:
+    1-30 ascii chars
+    no carriage return, form feed, horizontal tab, new line, vertical tab, and space
+    "\r\f\t\n\v "
