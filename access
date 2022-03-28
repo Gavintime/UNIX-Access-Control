@@ -213,6 +213,10 @@ class AccessController():
         if self._current_user == 'root':
             access_granted = True
 
+        if not access_granted:
+            self._log("You do not have permission to run this command.")
+            return
+
         # Write to file (append)
         try:
             with open(filename, 'a') as file:
@@ -221,6 +225,20 @@ class AccessController():
             self._log(f"IO Error: Unable to write to {filename}.")
             return
         self._log(f"User {self._current_user} wrote to {filename}: {text}")
+
+    def chmod(self, filename:str, perm_owner: str, perm_group: str, perm_other: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if self._current_user not in (self._file_ACL[filename], 'root'):
+            self._log("You do not have permission to run this command.")
+            return
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
