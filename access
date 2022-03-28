@@ -3,79 +3,126 @@
 import sys
 from typing import List
 
+
+class AccessController():
+
+    def __init__(self):
+
+        self._current_user      = None
+        self._root_created      = False
+        self._audit_fname       = "audit.txt"
+        self._accounts_fname    = "accounts.txt"
+
+        # create special files (overwrite)
+        try:
+            with open(self._accounts_fname, 'w'):
+                pass
+            with open(self._audit_fname, 'w'):
+                pass
+        except IOError:
+            sys.exit("IO Error: Unable to create special files, exiting...")
+
+    # add given user, erroring if user already exists
+    def useradd(self, username: str, password: str):
+
+        # make sure root is the first user created
+        if not self._root_created and username != 'root':
+            self._log("Error: First command must create root user.")
+            return
+
+        # only allow command while logged out if root not made yet
+        if self._root_created and self._current_user is None:
+            self._log("Error: You Must be logged in to run useradd.")
+            return
+
+        # make sure user doesn't exist yet
+        if self._user_exists(username):
+            self._log(f"Error: User {username} already exists.")
+            return
+
+
+        if '/' in username or ':' in username:
+            pass
+            # TODO!
+
+        # add user to accounts file
+        try:
+            with open(self._accounts_fname, 'a') as accounts_file:
+                accounts_file.write(f"{username} {password}\n")
+        except IOError:
+            self._log("IO Error: Unable to add user to accounts file.")
+            return
+
+        if username == 'root':
+            self._root_created = True
+        self._log(f"User {username} created")
+
+    def login(self, username: str, password: str):
+
+        # don't login if someone is already logged in
+        if self._current_user is not None:
+            self._log("Error: Cannot login, a user is currently logged in")
+            return
+
+        # read in usernames and passwords
+        user_info = []
+        try:
+            with open(self._accounts_fname, 'r') as accounts_file:
+                for line in accounts_file:
+                    user_info.append(line.split()[0:2])
+        except IOError:
+            self._log("IO Error: Unable to read accounts file.")
+            return
+
+        if [username, password] in user_info:
+            self._current_user = username
+            self._log(f"User {username} logged in")
+        else:
+            self._log("Username or password is incorrect. Login Failed.")
+
+    # logs to stdout and audit.txt
+    def _log(self, message: str):
+
+        print(message)
+        try:
+            with open(self._audit_fname, 'a') as audit_file:
+                audit_file.write(message + '\n')
+        except IOError:
+            sys.exit("Unable append log to audit.txt, exiting...")
+
+    # returns true if user is present, false otherwise
+    # helper function for useradd
+    def _user_exists(self, username: str) -> bool:
+
+        usernames = []
+        # read in user info
+        try:
+            with open(self._accounts_fname, 'r') as accounts_file:
+                for line in accounts_file:
+                    usernames.append(line.split()[0])
+        except IOError:
+            self._log("IO Error: Unable to read accounts file.")
+            return True
+
+        return username in usernames
+
+
 # return list of instructions from given file
-def read_instruction_file(filename: str) -> List[str]:
+# instructions are in the form of a list of words
+def read_instruction_file(filename: str) -> List[List[str]]:
 
     instructions = []
     # read in instructions, removing newline char
     try:
         with open(filename, 'r') as instruction_file:
             for line in instruction_file:
-                instructions.append(line[:-1])
+                instructions.append(line[:-1].split())
         return instructions
     except IOError:
         sys.exit("Unable to open instruction file, exiting...")
 
-# logs to stdout and audit.txt
-def log(message: str) -> None:
 
-    print(message)
-    try:
-        with open('audit.txt', 'a') as audit_file:
-            audit_file.write(message)
-    except IOError:
-        sys.exit("Unable append log to audit.txt, exiting...")
-
-# returns true if user is present, false otherwise
-# helper function for useradd
-def user_exists(username: str) -> bool:
-
-    usernames = []
-    # read in user info
-    try:
-        with open('accounts.txt', 'r') as accounts_file:
-            for line in accounts_file:
-                usernames.append(line.split()[0])
-    except IOError:
-        sys.exit("Error: Unable to read accounts file, exiting...")
-
-    return username in usernames
-
-# add given user, erroring if user already exists
-def useradd(username: str, password: str) -> bool:
-
-    # make sure user doesn't exist yet
-    if user_exists(username):
-        log(f"Error: User {username} already exists.")
-        return False
-
-    # add user to accounts file
-    try:
-        with open('accounts.txt', 'a') as accounts_file:
-            accounts_file.write(f"{username} {password}")
-    except IOError:
-        sys.exit("Error: Unable to add user to accounts file, exiting...")
-
-    log(f"User {username} created")
-    return True
-
-def login(username: str, password: str) -> None:
-
-    user_info = []
-    # read in usernames and passwords
-    try:
-        with open('accounts.txt', 'r') as accounts_file:
-            for line in accounts_file:
-                user_info.append(line.split()[0:2])
-    except IOError:
-        sys.exit("Error: Unable to read accounts file, exiting...")
-
-    if [username, password] in user_info:
-        log(f"User {username} logged in")
-    else:
-        log("Username or password is incorrect")
-
-
+# reads the instruction file and parses commands to be sent to the Access Controller
 def main():
 
     # get instructions
@@ -84,33 +131,57 @@ def main():
     filename = sys.argv[1]
     instructions = read_instruction_file(filename)
 
+    # create Access Control manager
+    acm = AccessController()
 
-    # create accounts and audit file (overwrite)
-    try:
-        with open('accounts.txt', 'w'):
+    # Start processing instructions
+    for inst in instructions:
+
+        if inst[0] == 'useradd':
+            acm.useradd(inst[1], inst[2])
+
+        elif inst[0] == 'login':
+            acm.login(inst[1], inst[2])
+
+        elif inst[0] == 'logout':
+            acm.logout()
+
+        elif inst[0] == 'groupadd':
+            acm.groupadd(inst[1])
+
+        elif inst[0] == 'usergrp':
+            acm.usergrp(inst[1], inst[2])
+
+        elif inst[0] == 'mkfile':
+            acm.mkfile(inst[1])
+
+        elif inst[0] == 'chmod':
+            acm.chmod(inst[1], inst[2], inst[3], inst[4])
+
+        elif inst[0] == 'chown':
+            acm.chown(inst[1], inst[2])
+
+        elif inst[0] == 'chgrp':
+            acm.chgrp(inst[1], inst[2])
+
+        elif inst[0] == 'read':
+            acm.read(inst[1])
+
+        elif inst[0] == 'write':
+            acm.write(inst[1], inst[2])
+
+        elif inst[0] == 'execute':
+            acm.execute(inst[1])
+
+        elif inst[0] == 'ls':
+            acm.ls(inst[1])
+
+        elif inst[0] == 'end':
+            acm.end()
+
+        # command does not exist
+        else:
             pass
-        with open('audit.txt', 'w'):
-            pass
-    except IOError:
-        sys.exit("Unable to create special files, exiting...")
-
-
-    # process first command, should be creating user root
-    first_instruction = instructions[0].split()
-    if len(first_instruction) == 3 and first_instruction[0:2] == ['useradd', 'root']:
-        useradd(first_instruction[1], first_instruction[2])
-    else:
-        log("Error: First command must add user root with password, exiting...")
-        sys.exit(1)
-
-
-    # process second command, should be logging in as root
-    second_instruction = instructions[1].split()
-    if len(second_instruction) == 3 and second_instruction[0:2] == ['login', 'root']:
-        login(second_instruction[1], second_instruction[2])
-    else:
-        log("Error: Second command must login to root, exiting...")
-        sys.exit(1)
 
 
 if __name__ == '__main__':

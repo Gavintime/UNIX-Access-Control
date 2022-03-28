@@ -1,6 +1,5 @@
 user accounts
     root: admin, can create users, groups, change file ownership
-    accounts have a username and pass (both case sensitive)
     user accounts with passwords are stored in a real file accounts.txt
         use for auth (dont use in memory list etc)
         explain approach/format in docs
@@ -53,7 +52,6 @@ instructions
         only time useradd works without being logged in
         report error if useradd is not the first command
         must run login command after useradd to login as root
-        cannot run login command after logged in
     after exec each instruction, print command to screen and real log file audit.txt
 
 user,group,file name format:
