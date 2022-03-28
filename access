@@ -80,6 +80,15 @@ class AccessController():
         else:
             self._log("Username or password is incorrect. Login Failed.")
 
+    def logout(self):
+
+        if self._current_user is None:
+            self._log("Not currently logged in.")
+            return
+
+        self._log(f"User {self._current_user} logged out")
+        self._current_user = None
+
     def groupadd(self, groupname: str):
 
         # auth checking
