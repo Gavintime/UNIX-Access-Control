@@ -12,21 +12,16 @@ groups
 files
     after last instruction, create real file files.txt containing each filename, owner, group, perms
         (see provided file structure)
-    each file created with mkfile must have a corresponding real file (must be able to read and write)
-        same dir as exec
     special files accounts.txt, audit.txt, groups.txt, and files.txt
         not accessable via mkfile, read, write, execute, ls, chown, chgrp, or chmod
             error (and log) if these files are refferenced in commands
         wipe these files on program start
-    overwrite existing files before current exection (as if file didn't exist)
-        subsequent write commands should still append
 
 commands:
     chmod filename rwx rwx rwx
     chown filename username
     chgrp filename groupname
     read filename
-    write filename text
     execute filename
     ls filename
     end

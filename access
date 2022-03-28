@@ -7,20 +7,19 @@ from dataclasses import dataclass
 class AccessController():
 
     @dataclass
-    class File:
-        filename: str
+    class FileAC:
         owner: str
         group: str
         permissions: str = "110000000"
 
     def __init__(self):
 
-        self._current_user: str             = None
-        self._root_created: bool            = False
-        self._groups: Dict[str, Set[str]]   = {}
-        self._file_ACL: List[self.File]     = []
-        self._audit_fname: str              = "audit.txt"
-        self._accounts_fname: str           = "accounts.txt"
+        self._current_user: str                 = None
+        self._root_created: bool                = False
+        self._groups: Dict[str, Set[str]]       = {}
+        self._file_ACL: Dict[str, self.FileAC]  = {}
+        self._audit_fname: str                  = "audit.txt"
+        self._accounts_fname: str               = "accounts.txt"
 
         # create special files (overwrite)
         try:
@@ -154,7 +153,7 @@ class AccessController():
     def mkfile(self, filename: str):
 
         if self._current_user is None:
-            self._log("You must be logged in to run this command")
+            self._log("You must be logged in to run this command.")
             return
 
         if len(filename) > 30:
@@ -165,10 +164,9 @@ class AccessController():
             self._log("Filename cannot contain a forward slash (/) or colon (:).")
             return
 
-        for file in self._file_ACL:
-            if file.filename == filename:
-                self._log(f"File {filename} already exists.")
-                return
+        if filename in self._file_ACL:
+            self._log(f"File {filename} already exists.")
+            return
 
         # create file (overwrite)
         try:
@@ -179,11 +177,50 @@ class AccessController():
             return
 
         # create ACL entry
-        new_file = self.File(filename=filename,
-                             owner=self._current_user,
-                             group='nil')
-        self._file_ACL.append(new_file)
+        new_file = self.FileAC(owner=self._current_user, group='nil')
+        self._file_ACL[filename] = new_file
         self._log(f"File {filename} with owner {self._current_user} and default permissions created")
+
+    def write(self, filename: str, text: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        access_granted = False
+
+        # allow writing if user is owner and file has write access for owner
+        if self._current_user == self._file_ACL[filename].owner:
+            if self._file_ACL[filename].permissions[1] == '1':
+                access_granted = True
+
+        # allow access if user is not owner, is a member of group associated
+        # with file, and write access is given for the group
+        elif (self._file_ACL[filename].group != 'nil' and
+              self._current_user in self._groups[self._file_ACL[filename].group]):
+              if self._file_ACL[filename].permissions[4] == '1':
+                  access_granted = True
+
+        # grant access if user is not the owner, not a member of the group
+        # for file, and write access has been granted for others
+        elif self._file_ACL[filename].permissions[7] == '1':
+            access_granted = True
+
+        if self._current_user == 'root':
+            access_granted = True
+
+        # Write to file (append)
+        try:
+            with open(filename, 'a') as file:
+                file.write(text + '\n')
+        except IOError:
+            self._log(f"IO Error: Unable to write to {filename}.")
+            return
+        self._log(f"User {self._current_user} wrote to {filename}: {text}")
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
@@ -273,7 +310,7 @@ def main():
             acm.read(inst[1])
 
         elif inst[0] == 'write':
-            acm.write(inst[1], inst[2])
+            acm.write(inst[1], ' '.join(inst[2:]))
 
         elif inst[0] == 'execute':
             acm.execute(inst[1])
