@@ -110,8 +110,26 @@ class AccessController():
             return
 
         # create empty group
-        self._groups[groupname] = {}
+        self._groups[groupname] = set()
         self._log(f"Group {groupname} created")
+
+    def usergrp(self, username: str, groupname: str):
+
+        # auth checking
+        if self._current_user != 'root':
+            self._log("Only root can run this command.")
+            return
+
+        # Input checking
+        if not self._user_exists(username):
+            self._log(f"User {username} does not exist.")
+            return
+        if groupname not in self._groups:
+            self._log(f"Group {groupname} does not exist.")
+            return
+
+        self._groups[groupname].add(username)
+        self._log(f"User {username} added to group {groupname}")
 
     # logs to stdout and audit.txt
     def _log(self, message: str):

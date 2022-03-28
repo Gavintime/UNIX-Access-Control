@@ -9,7 +9,6 @@ groups
     after all instructions are processed, create real groups.txt listing groups with users
         (see provided file structure)
 
-
 files
     filename is case sensitive
     has an owner (user)
@@ -28,8 +27,6 @@ files
         subsequent write commands should still append
 
 commands:
-    logout
-    usergrp username groupname
     mkfile filename
     chmod filename rwx rwx rwx
     chown filename username
