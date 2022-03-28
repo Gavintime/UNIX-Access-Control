@@ -10,11 +10,6 @@ groups
         (see provided file structure)
 
 files
-    filename is case sensitive
-    has an owner (user)
-    triplet of access perms
-    optional group (only 1)
-    in in memory data sctructure for file ACL (access control list)
     after last instruction, create real file files.txt containing each filename, owner, group, perms
         (see provided file structure)
     each file created with mkfile must have a corresponding real file (must be able to read and write)
@@ -27,7 +22,6 @@ files
         subsequent write commands should still append
 
 commands:
-    mkfile filename
     chmod filename rwx rwx rwx
     chown filename username
     chgrp filename groupname
@@ -44,13 +38,3 @@ instructions
         report error if useradd is not the first command
         must run login command after useradd to login as root
     after exec each instruction, print command to screen and real log file audit.txt
-
-user,group,file name format:
-    1-30 ascii chars
-    no forward slash, colon, carriage return, form feed, horizontal tab, new line, vertical tab, and space.
-    "/:\r\f\t\n\v "
-
-password format:
-    1-30 ascii chars
-    no carriage return, form feed, horizontal tab, new line, vertical tab, and space
-    "\r\f\t\n\v "

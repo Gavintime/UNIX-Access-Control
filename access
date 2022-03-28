@@ -2,15 +2,23 @@
 
 import sys
 from typing import List, Dict, Set
-
+from dataclasses import dataclass
 
 class AccessController():
+
+    @dataclass
+    class File:
+        filename: str
+        owner: str
+        group: str
+        permissions: str = "110000000"
 
     def __init__(self):
 
         self._current_user: str             = None
         self._root_created: bool            = False
         self._groups: Dict[str, Set[str]]   = {}
+        self._file_ACL: List[self.File]     = []
         self._audit_fname: str              = "audit.txt"
         self._accounts_fname: str           = "accounts.txt"
 
@@ -34,6 +42,14 @@ class AccessController():
         # only allow command while logged out if root not made yet
         if self._root_created and self._current_user is None:
             self._log("Error: You Must be logged in to run useradd.")
+            return
+
+        if len(username) > 30:
+            self._log("Username cannot exceed 30 characters.")
+            return
+
+        if len(password) > 30:
+            self._log("Password cannot exceed 30 characters.")
             return
 
         # make sure user doesn't exist yet
@@ -96,6 +112,10 @@ class AccessController():
             self._log("Only root can run this command.")
             return
 
+        if len(groupname) > 30:
+            self._log("Groupname cannot exceed 30 characters.")
+            return
+
         if groupname == 'nil':
             self._log("The name nil is not a valid groupname.")
             return
@@ -130,6 +150,40 @@ class AccessController():
 
         self._groups[groupname].add(username)
         self._log(f"User {username} added to group {groupname}")
+
+    def mkfile(self, filename: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command")
+            return
+
+        if len(filename) > 30:
+            self._log("Filename cannot exceed 30 characters.")
+            return
+
+        if '/' in filename or ':' in filename:
+            self._log("Filename cannot contain a forward slash (/) or colon (:).")
+            return
+
+        for file in self._file_ACL:
+            if file.filename == filename:
+                self._log(f"File {filename} already exists.")
+                return
+
+        # create file (overwrite)
+        try:
+            with open(filename, 'w'):
+                pass
+        except IOError:
+            self._log(f"IO Error: Unable to create {filename}.")
+            return
+
+        # create ACL entry
+        new_file = self.File(filename=filename,
+                             owner=self._current_user,
+                             group='nil')
+        self._file_ACL.append(new_file)
+        self._log(f"File {filename} with owner {self._current_user} and default permissions created")
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
