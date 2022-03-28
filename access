@@ -91,6 +91,10 @@ class AccessController():
             self._log("The name nil is not a valid groupname.")
             return
 
+        if '/' in groupname or ':' in groupname:
+            self._log("Groupname cannot contain a forward slash (/) or colon (:).")
+            return
+
         # check if group exists
         if groupname in self._groups:
             self._log(f"Group {groupname} already exists.")

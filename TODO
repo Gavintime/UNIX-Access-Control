@@ -5,9 +5,7 @@ user accounts
         explain approach/format in docs
 
 groups
-case sensitive
     users belong to 0+ groups
-    use in memory data structure for management
     after all instructions are processed, create real groups.txt listing groups with users
         (see provided file structure)
 
@@ -30,10 +28,7 @@ files
         subsequent write commands should still append
 
 commands:
-    useradd username password
-    login username password
     logout
-    groupadd groupname
     usergrp username groupname
     mkfile filename
     chmod filename rwx rwx rwx
@@ -46,7 +41,6 @@ commands:
     end
 
 instructions
-    case sensitive
     assume instruction file is error free (poggers)
     first inst must be "useradd root password"
         only time useradd works without being logged in
