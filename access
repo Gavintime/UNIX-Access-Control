@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
 import sys
-from typing import List
+from typing import List, Dict, Set
 
 
 class AccessController():
 
     def __init__(self):
 
-        self._current_user      = None
-        self._root_created      = False
-        self._audit_fname       = "audit.txt"
-        self._accounts_fname    = "accounts.txt"
+        self._current_user: str             = None
+        self._root_created: bool            = False
+        self._groups: Dict[str, Set[str]]   = {}
+        self._audit_fname: str              = "audit.txt"
+        self._accounts_fname: str           = "accounts.txt"
 
         # create special files (overwrite)
         try:
@@ -40,10 +41,9 @@ class AccessController():
             self._log(f"Error: User {username} already exists.")
             return
 
-
         if '/' in username or ':' in username:
-            pass
-            # TODO!
+            self._log("Username cannot contain a forward slash (/) or colon (:).")
+            return
 
         # add user to accounts file
         try:
@@ -79,6 +79,26 @@ class AccessController():
             self._log(f"User {username} logged in")
         else:
             self._log("Username or password is incorrect. Login Failed.")
+
+    def groupadd(self, groupname: str):
+
+        # auth checking
+        if self._current_user != 'root':
+            self._log("Only root can run this command.")
+            return
+
+        if groupname == 'nil':
+            self._log("The name nil is not a valid groupname.")
+            return
+
+        # check if group exists
+        if groupname in self._groups:
+            self._log(f"Group {groupname} already exists.")
+            return
+
+        # create empty group
+        self._groups[groupname] = {}
+        self._log(f"Group {groupname} created")
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
