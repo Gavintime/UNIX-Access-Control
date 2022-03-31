@@ -1,35 +1,13 @@
 user accounts
-    root: admin, can create users, groups, change file ownership
-    user accounts with passwords are stored in a real file accounts.txt
-        use for auth (dont use in memory list etc)
-        explain approach/format in docs
-
-groups
-    users belong to 0+ groups
-    after all instructions are processed, create real groups.txt listing groups with users
-        (see provided file structure)
+    explain file approach/format in docs
 
 files
-    after last instruction, create real file files.txt containing each filename, owner, group, perms
-        (see provided file structure)
     special files accounts.txt, audit.txt, groups.txt, and files.txt
         not accessable via mkfile, read, write, execute, ls, chown, chgrp, or chmod
             error (and log) if these files are refferenced in commands
-        wipe these files on program start
-
-commands:
-    chmod filename rwx rwx rwx
-    chown filename username
-    chgrp filename groupname
-    read filename
-    execute filename
-    ls filename
-    end
 
 instructions
-    assume instruction file is error free (poggers)
     first inst must be "useradd root password"
         only time useradd works without being logged in
         report error if useradd is not the first command
         must run login command after useradd to login as root
-    after exec each instruction, print command to screen and real log file audit.txt

@@ -20,12 +20,18 @@ class AccessController():
         self._file_ACL: Dict[str, self.FileAC]  = {}
         self._audit_fname: str                  = "audit.txt"
         self._accounts_fname: str               = "accounts.txt"
+        self._groups_fname: str                 = "groups.txt"
+        self._files_fname: str                  = "files.txt"
 
         # create special files (overwrite)
         try:
             with open(self._accounts_fname, 'w'):
                 pass
             with open(self._audit_fname, 'w'):
+                pass
+            with open(self._groups_fname, 'w'):
+                pass
+            with open(self._files_fname, 'w'):
                 pass
         except IOError:
             sys.exit("IO Error: Unable to create special files, exiting...")
@@ -301,6 +307,23 @@ class AccessController():
         self._log(f"{filename}: {self._file_ACL[filename].owner} {self._file_ACL[filename].group} "
                   f"{self._file_ACL[filename].permissions[0:3]} {self._file_ACL[filename].permissions[3:6]} "
                   f"{self._file_ACL[filename].permissions[6:9]}")
+
+    def end(self):
+
+        # create and write groups.txt and files.txt (overwrite)
+        try:
+            with open(self._groups_fname, 'w') as groups_file:
+                for group in self._groups:
+                    groups_file.write(f"{group}: {' '.join(sorted(self._groups[group]))}\n")
+            with open(self._files_fname, 'w') as files_file:
+                for file in self._file_ACL:
+                    files_file.write(f"{file}: {self._file_ACL[file].owner} {self._file_ACL[file].group} "
+                                     f"{self._file_ACL[file].permissions[0:3]} {self._file_ACL[file].permissions[3:6]} "
+                                     f"{self._file_ACL[file].permissions[6:9]}\n")
+        except IOError:
+            sys.exit("IO Error: Unable to create special files, exiting...")
+
+        sys.exit()
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
