@@ -162,6 +162,10 @@ class AccessController():
             self._log("You must be logged in to run this command.")
             return
 
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot change the group of this protected file.")
+            return
+
         if filename not in self._file_ACL:
             self._log(f"File {filename} does not exist.")
             return
@@ -195,6 +199,10 @@ class AccessController():
             self._log("Filename cannot contain a forward slash (/) or colon (:).")
             return
 
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot create this protected file.")
+            return
+
         if filename in self._file_ACL:
             self._log(f"File {filename} already exists.")
             return
@@ -216,6 +224,10 @@ class AccessController():
 
         if self._current_user is None:
             self._log("You must be logged in to run this command.")
+            return
+
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot write to this protected file.")
             return
 
         if filename not in self._file_ACL:
@@ -241,6 +253,10 @@ class AccessController():
             self._log("You must be logged in to run this command.")
             return
 
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot read this protected file.")
+            return
+
         if filename not in self._file_ACL:
             self._log(f"File {filename} does not exist.")
             return
@@ -260,10 +276,34 @@ class AccessController():
             self._log(f"IO Error: Unable to read {filename}.")
             return
 
+    def execute(self, filename: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot execute this protected file.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if not self._access_granted(filename, 2, 'x'):
+            self._log(f"User {self._current_user} denied execute access to {filename}")
+            return
+
+        self._log("prog executed successfully")
+
     def chmod(self, filename:str, p_owner: str, p_group: str, p_other: str):
 
         if self._current_user is None:
             self._log("You must be logged in to run this command.")
+            return
+
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot change the permissions of this protected file.")
             return
 
         if filename not in self._file_ACL:
@@ -283,6 +323,10 @@ class AccessController():
             self._log("You do not have permission to run this command")
             return
 
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot change the owner of this protected file.")
+            return
+
         if filename not in self._file_ACL:
             self._log(f"File {filename} does not exist.")
             return
@@ -296,12 +340,16 @@ class AccessController():
 
     def ls(self, filename: str):
 
-        if filename not in self._file_ACL:
-            self._log(f"File {filename} does not exist.")
-            return
-
         if self._current_user is None:
             self._log("You must be logged in to run this command.")
+            return
+
+        if filename in [self._audit_fname, self._accounts_fname, self._groups_fname, self._files_fname]:
+            self._log("You cannot list this protected file.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
             return
 
         self._log(f"{filename}: {self._file_ACL[filename].owner} {self._file_ACL[filename].group} "
@@ -405,6 +453,10 @@ def main():
 
     # create Access Control manager
     acm = AccessController()
+
+    if instructions[0][0:2] != ['useradd', 'root']:
+        acm._log("First command must be useradd root password")
+        sys.exit(1)
 
     # Start processing instructions
     for inst in instructions:

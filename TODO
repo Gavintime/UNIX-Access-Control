@@ -1,13 +1,2 @@
 user accounts
     explain file approach/format in docs
-
-files
-    special files accounts.txt, audit.txt, groups.txt, and files.txt
-        not accessable via mkfile, read, write, execute, ls, chown, chgrp, or chmod
-            error (and log) if these files are refferenced in commands
-
-instructions
-    first inst must be "useradd root password"
-        only time useradd works without being logged in
-        report error if useradd is not the first command
-        must run login command after useradd to login as root
