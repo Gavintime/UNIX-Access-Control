@@ -10,7 +10,7 @@ class AccessController():
     class FileAC:
         owner: str
         group: str
-        permissions: str = "110000000"
+        permissions: str = "rw-------"
 
     def __init__(self):
 
@@ -150,6 +150,31 @@ class AccessController():
         self._groups[groupname].add(username)
         self._log(f"User {username} added to group {groupname}")
 
+    def chgrp(self, filename: str, groupname: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if self._current_user not in (self._file_ACL[filename].owner, 'root'):
+            self._log("You do not have permission to run this command.")
+            return
+
+        if groupname not in self._groups and groupname != 'nil':
+            self._log(f"Group {groupname} does not exist.")
+            return
+
+        if self._current_user != 'root' and self._current_user not in self._groups[groupname]:
+            self._log(f"You must be a member of {groupname} to run this command.")
+            return
+
+        self._file_ACL[filename].group = groupname
+        self._log(f"Group for {filename} set to {groupname} by {self._current_user}")
+
     def mkfile(self, filename: str):
 
         if self._current_user is None:
@@ -195,19 +220,19 @@ class AccessController():
 
         # allow writing if user is owner and file has write access for owner
         if self._current_user == self._file_ACL[filename].owner:
-            if self._file_ACL[filename].permissions[1] == '1':
+            if self._file_ACL[filename].permissions[1] == 'w':
                 access_granted = True
 
         # allow access if user is not owner, is a member of group associated
         # with file, and write access is given for the group
         elif (self._file_ACL[filename].group != 'nil' and
               self._current_user in self._groups[self._file_ACL[filename].group]):
-              if self._file_ACL[filename].permissions[4] == '1':
+              if self._file_ACL[filename].permissions[4] == 'w':
                   access_granted = True
 
         # grant access if user is not the owner, not a member of the group
         # for file, and write access has been granted for others
-        elif self._file_ACL[filename].permissions[7] == '1':
+        elif self._file_ACL[filename].permissions[7] == 'w':
             access_granted = True
 
         if self._current_user == 'root':
@@ -226,7 +251,7 @@ class AccessController():
             return
         self._log(f"User {self._current_user} wrote to {filename}: {text}")
 
-    def chmod(self, filename:str, perm_owner: str, perm_group: str, perm_other: str):
+    def chmod(self, filename:str, p_owner: str, p_group: str, p_other: str):
 
         if self._current_user is None:
             self._log("You must be logged in to run this command.")
@@ -236,9 +261,12 @@ class AccessController():
             self._log(f"File {filename} does not exist.")
             return
 
-        if self._current_user not in (self._file_ACL[filename], 'root'):
+        if self._current_user not in (self._file_ACL[filename].owner, 'root'):
             self._log("You do not have permission to run this command.")
             return
+
+        self._file_ACL[filename].permissions = p_owner + p_group + p_other
+        self._log(f"Permissions for {filename} set to {p_owner} {p_group} {p_other} by {self._current_user}")
 
     # logs to stdout and audit.txt
     def _log(self, message: str):
