@@ -271,6 +271,37 @@ class AccessController():
         self._file_ACL[filename].permissions = p_owner + p_group + p_other
         self._log(f"Permissions for {filename} set to {p_owner} {p_group} {p_other} by {self._current_user}")
 
+    def chown(self, filename: str, username: str):
+
+        if self._current_user != 'root':
+            self._log("You do not have permission to run this command")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if not self._user_exists(username):
+            self._log(f"User {username} does not exist.")
+            return
+
+        self._file_ACL[filename].owner = username
+        self._log(f"Owner of {filename} changed to {username}")
+
+    def ls(self, filename: str):
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        self._log(f"{filename}: {self._file_ACL[filename].owner} {self._file_ACL[filename].group} "
+                  f"{self._file_ACL[filename].permissions[0:3]} {self._file_ACL[filename].permissions[3:6]} "
+                  f"{self._file_ACL[filename].permissions[6:9]}")
+
     # logs to stdout and audit.txt
     def _log(self, message: str):
 
@@ -297,6 +328,8 @@ class AccessController():
 
         return username in usernames
 
+    # check if the given user has the given permission for the given file
+    # uses UNIX permission standard
     def _access_granted(self, filename: str, access_index, access_value: str) -> bool:
 
         access_granted = False
