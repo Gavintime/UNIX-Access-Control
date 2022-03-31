@@ -76,7 +76,7 @@ class AccessController():
 
         # don't login if someone is already logged in
         if self._current_user is not None:
-            self._log("Error: Cannot login, a user is currently logged in")
+            self._log("Login failed: simultaneous login not permitted")
             return
 
         # read in usernames and passwords
@@ -93,7 +93,7 @@ class AccessController():
             self._current_user = username
             self._log(f"User {username} logged in")
         else:
-            self._log("Username or password is incorrect. Login Failed.")
+            self._log("Login failed: invalid username or password")
 
     def logout(self):
 
@@ -216,30 +216,8 @@ class AccessController():
             self._log(f"File {filename} does not exist.")
             return
 
-        access_granted = False
-
-        # allow writing if user is owner and file has write access for owner
-        if self._current_user == self._file_ACL[filename].owner:
-            if self._file_ACL[filename].permissions[1] == 'w':
-                access_granted = True
-
-        # allow access if user is not owner, is a member of group associated
-        # with file, and write access is given for the group
-        elif (self._file_ACL[filename].group != 'nil' and
-              self._current_user in self._groups[self._file_ACL[filename].group]):
-              if self._file_ACL[filename].permissions[4] == 'w':
-                  access_granted = True
-
-        # grant access if user is not the owner, not a member of the group
-        # for file, and write access has been granted for others
-        elif self._file_ACL[filename].permissions[7] == 'w':
-            access_granted = True
-
-        if self._current_user == 'root':
-            access_granted = True
-
-        if not access_granted:
-            self._log("You do not have permission to run this command.")
+        if not self._access_granted(filename, 1, 'w'):
+            self._log(f"User {self._current_user} denied write access to {filename}")
             return
 
         # Write to file (append)
@@ -250,6 +228,31 @@ class AccessController():
             self._log(f"IO Error: Unable to write to {filename}.")
             return
         self._log(f"User {self._current_user} wrote to {filename}: {text}")
+
+    def read(self, filename: str):
+
+        if self._current_user is None:
+            self._log("You must be logged in to run this command.")
+            return
+
+        if filename not in self._file_ACL:
+            self._log(f"File {filename} does not exist.")
+            return
+
+        if not self._access_granted(filename, 0, 'r'):
+            self._log(f"User {self._current_user} denied read access to {filename}")
+            return
+
+        self._log(f"User {self._current_user} reads {filename} as:")
+
+        # read file
+        try:
+            with open(filename, 'r') as file:
+                for line in file.readlines():
+                    self._log(line[:-1])
+        except IOError:
+            self._log(f"IO Error: Unable to read {filename}.")
+            return
 
     def chmod(self, filename:str, p_owner: str, p_group: str, p_other: str):
 
@@ -294,6 +297,31 @@ class AccessController():
 
         return username in usernames
 
+    def _access_granted(self, filename: str, access_index, access_value: str) -> bool:
+
+        access_granted = False
+
+        # allow if user is owner and file has access for owner
+        if self._current_user == self._file_ACL[filename].owner:
+            if self._file_ACL[filename].permissions[access_index] == access_value:
+                access_granted = True
+
+        # allow access if user is not owner, is a member of group associated
+        # with file, and access is given for the group
+        elif (self._file_ACL[filename].group != 'nil' and
+              self._current_user in self._groups[self._file_ACL[filename].group]):
+              if self._file_ACL[filename].permissions[access_index + 3] == access_value:
+                  access_granted = True
+
+        # grant access if user is not the owner, not a member of the group
+        # for file, and access has been granted for others
+        elif self._file_ACL[filename].permissions[access_index + 6] == access_value:
+            access_granted = True
+
+        if self._current_user == 'root':
+            access_granted = True
+
+        return access_granted
 
 # return list of instructions from given file
 # instructions are in the form of a list of words
