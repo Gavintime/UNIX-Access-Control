@@ -1,0 +1,15 @@
+useradd root mypassword101
+login root mypassword101
+useradd Gavin supersecret
+chgrp Gavinsfile Gavinsgroup
+chown Gavinsfile Gavin
+usergrp Gavin Gavinsgroup
+logout
+login Gavin supersecret
+write Gavinsfile some cool message
+read Gavinsfile
+execute Gavinsfile
+chmod Gavinsfile r-- --- ---
+ls Gavinsfile
+logout
+end

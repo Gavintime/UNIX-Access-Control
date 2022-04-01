@@ -1,9 +1,10 @@
 # blacklist all files
 *
 # whitelist these files
+!*/
 !.gitignore
 !access
 !TODO
 !README.TXT
-!test_case_1.txt
-!test_case_2.txt
+!test_case_1/*
+!test_case_2/*

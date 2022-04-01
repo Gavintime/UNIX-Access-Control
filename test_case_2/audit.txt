@@ -1,0 +1,14 @@
+User root created
+User root logged in
+User Gavin created
+Error with chgrp: file Gavinsfile not found
+Error with chown: file Gavinsfile not found
+Group Gavinsgroup does not exist.
+User root logged out
+User Gavin logged in
+Error with write: file Gavinsfile not found
+Error with read: file Gavinsfile not found
+Error with execute: file Gavinsfile not found
+Error with chmod: file Gavinsfile not found
+Error with ls: file Gavinsfile not found
+User Gavin logged out

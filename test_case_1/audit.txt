@@ -1,0 +1,17 @@
+User root created
+User root logged in
+Group Gavinsgroup created
+User Gavin created
+File Gavinsfile with owner root and default permissions created
+Group for Gavinsfile changed to Gavinsgroup by root
+Owner of Gavinsfile changed to Gavin
+User Gavin added to group Gavinsgroup
+User root logged out
+User Gavin logged in
+User Gavin wrote to Gavinsfile: some cool message
+User Gavin reads Gavinsfile as:
+some cool message
+User Gavin denied execute access to Gavinsfile
+Permissions for Gavinsfile set to r-- --- --- by Gavin
+Gavinsfile: Gavin Gavinsgroup r-- --- ---
+User Gavin logged out
